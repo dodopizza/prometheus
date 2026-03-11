@@ -14,8 +14,10 @@
 package tsdb
 
 import (
+	"log/slog"
 	"math"
 	"sync"
+	"time"
 )
 
 // isolationState holds the isolation information.
@@ -30,6 +32,8 @@ type isolationState struct {
 	// Doubly linked list of active reads.
 	next *isolationState
 	prev *isolationState
+
+	id uint64
 }
 
 // Close closes the state.
@@ -38,6 +42,10 @@ func (i *isolationState) Close() {
 	defer i.isolation.readMtx.Unlock()
 	i.next.prev = i.prev
 	i.prev.next = i.next
+	slog.Info("Isolation state closed",
+		"id", i.id,
+		"mint", time.UnixMilli(i.mint).Format(time.DateTime),
+		"maxt", time.UnixMilli(i.maxt).Format(time.DateTime))
 }
 
 func (i *isolationState) IsolationDisabled() bool {
@@ -133,6 +141,8 @@ func (i *isolation) lowestAppendTime() int64 {
 	return lowest
 }
 
+var nextIsoStateId uint64 = 1
+
 // State returns an object used to control isolation
 // between a query and appends. Must be closed when complete.
 func (i *isolation) State(mint, maxt int64) *isolationState {
@@ -148,7 +158,9 @@ func (i *isolation) State(mint, maxt int64) *isolationState {
 		isolation:         i,
 		mint:              mint,
 		maxt:              maxt,
+		id:                nextIsoStateId,
 	}
+	nextIsoStateId++
 	for k := range i.appendsOpen {
 		isoState.incompleteAppends[k] = struct{}{}
 	}
@@ -159,6 +171,11 @@ func (i *isolation) State(mint, maxt int64) *isolationState {
 	isoState.next = i.readsOpen.next
 	i.readsOpen.next.prev = isoState
 	i.readsOpen.next = isoState
+
+	slog.Info("New isolation state added",
+		"id", isoState.id,
+		"mint", time.UnixMilli(mint).Format(time.DateTime),
+		"maxt", time.UnixMilli(maxt).Format(time.DateTime))
 
 	return isoState
 }
