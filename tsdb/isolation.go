@@ -149,6 +149,9 @@ func (i *isolation) State(mint, maxt int64) *isolationState {
 	i.appendMtx.RLock() // Take append mutex before read mutex.
 	defer i.appendMtx.RUnlock()
 
+	i.readMtx.Lock()
+	defer i.readMtx.Unlock()
+
 	// We need to track reads even when isolation is disabled, so that head
 	// truncation can wait till reads overlapping that range have finished.
 	isoState := &isolationState{
@@ -165,8 +168,6 @@ func (i *isolation) State(mint, maxt int64) *isolationState {
 		isoState.incompleteAppends[k] = struct{}{}
 	}
 
-	i.readMtx.Lock()
-	defer i.readMtx.Unlock()
 	isoState.prev = i.readsOpen
 	isoState.next = i.readsOpen.next
 	i.readsOpen.next.prev = isoState
