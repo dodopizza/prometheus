@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 
-readarray -t mod_files < <(find . -type f -name go.mod)
+mod_files=()
+while IFS= read -r file; do
+  mod_files+=("$file")
+done < <(find . -type f -name 'go.mod')
 
 echo "Checking files ${mod_files[@]}"
 

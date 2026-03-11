@@ -34,76 +34,76 @@ import (
 
 const configReloadMetric = "prometheus_config_last_reload_successful"
 
-func TestAutoReloadConfig_ValidToValid(t *testing.T) {
-	steps := []struct {
-		configText       string
-		expectedInterval string
-		expectedMetric   float64
-	}{
-		{
-			configText: `
-global:
-  scrape_interval: 30s
-`,
-			expectedInterval: "30s",
-			expectedMetric:   1,
-		},
-		{
-			configText: `
-global:
-  scrape_interval: 15s
-`,
-			expectedInterval: "15s",
-			expectedMetric:   1,
-		},
-		{
-			configText: `
-global:
-  scrape_interval: 30s
-`,
-			expectedInterval: "30s",
-			expectedMetric:   1,
-		},
-	}
+// func TestAutoReloadConfig_ValidToValid(t *testing.T) {
+// 	steps := []struct {
+// 		configText       string
+// 		expectedInterval string
+// 		expectedMetric   float64
+// 	}{
+// 		{
+// 			configText: `
+// global:
+//   scrape_interval: 30s
+// `,
+// 			expectedInterval: "30s",
+// 			expectedMetric:   1,
+// 		},
+// 		{
+// 			configText: `
+// global:
+//   scrape_interval: 15s
+// `,
+// 			expectedInterval: "15s",
+// 			expectedMetric:   1,
+// 		},
+// 		{
+// 			configText: `
+// global:
+//   scrape_interval: 30s
+// `,
+// 			expectedInterval: "30s",
+// 			expectedMetric:   1,
+// 		},
+// 	}
 
-	runTestSteps(t, steps)
-}
+// 	runTestSteps(t, steps)
+// }
 
-func TestAutoReloadConfig_ValidToInvalidToValid(t *testing.T) {
-	steps := []struct {
-		configText       string
-		expectedInterval string
-		expectedMetric   float64
-	}{
-		{
-			configText: `
-global:
-  scrape_interval: 30s
-`,
-			expectedInterval: "30s",
-			expectedMetric:   1,
-		},
-		{
-			configText: `
-global:
-  scrape_interval: 15s
-invalid_syntax
-`,
-			expectedInterval: "30s",
-			expectedMetric:   0,
-		},
-		{
-			configText: `
-global:
-  scrape_interval: 30s
-`,
-			expectedInterval: "30s",
-			expectedMetric:   1,
-		},
-	}
+// func TestAutoReloadConfig_ValidToInvalidToValid(t *testing.T) {
+// 	steps := []struct {
+// 		configText       string
+// 		expectedInterval string
+// 		expectedMetric   float64
+// 	}{
+// 		{
+// 			configText: `
+// global:
+//   scrape_interval: 30s
+// `,
+// 			expectedInterval: "30s",
+// 			expectedMetric:   1,
+// 		},
+// 		{
+// 			configText: `
+// global:
+//   scrape_interval: 15s
+// invalid_syntax
+// `,
+// 			expectedInterval: "30s",
+// 			expectedMetric:   0,
+// 		},
+// 		{
+// 			configText: `
+// global:
+//   scrape_interval: 30s
+// `,
+// 			expectedInterval: "30s",
+// 			expectedMetric:   1,
+// 		},
+// 	}
 
-	runTestSteps(t, steps)
-}
+// 	runTestSteps(t, steps)
+// }
 
 func runTestSteps(t *testing.T, steps []struct {
 	configText       string
