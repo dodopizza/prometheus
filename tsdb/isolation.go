@@ -79,6 +79,8 @@ type isolation struct {
 	readsOpen *isolationState
 	// If true, writes are not tracked while reads are still tracked.
 	disabled bool
+	// Counter for unique isolation state IDs, protected by readMtx.
+	nextIsoStateId uint64
 }
 
 func newIsolation(disabled bool) *isolation {
@@ -93,6 +95,7 @@ func newIsolation(disabled bool) *isolation {
 	return &isolation{
 		appendsOpen:     map[uint64]*isolationAppender{},
 		appendsOpenList: appender,
+		nextIsoStateId:  1,
 		readsOpen:       isoState,
 		disabled:        disabled,
 		appendersPool:   sync.Pool{New: func() any { return &isolationAppender{} }},
@@ -141,8 +144,6 @@ func (i *isolation) lowestAppendTime() int64 {
 	return lowest
 }
 
-var nextIsoStateId uint64 = 1
-
 // State returns an object used to control isolation
 // between a query and appends. Must be closed when complete.
 func (i *isolation) State(mint, maxt int64) *isolationState {
@@ -161,9 +162,9 @@ func (i *isolation) State(mint, maxt int64) *isolationState {
 		isolation:         i,
 		mint:              mint,
 		maxt:              maxt,
-		id:                nextIsoStateId,
+		id:                i.nextIsoStateId,
 	}
-	nextIsoStateId++
+	i.nextIsoStateId++
 	for k := range i.appendsOpen {
 		isoState.incompleteAppends[k] = struct{}{}
 	}
