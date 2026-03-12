@@ -219,7 +219,7 @@ func TestDataAvailableOnlyAfterCommit(t *testing.T) {
 	_, err := app.Append(0, labels.FromStrings("foo", "bar"), 0, 0)
 	require.NoError(t, err)
 
-	querier, err := db.Querier(0, 1)
+	querier, err := db.Querier(0, 1, "")
 	require.NoError(t, err)
 	seriesSet := query(t, querier, labels.MustNewMatcher(labels.MatchEqual, "foo", "bar"))
 	require.Equal(t, map[string][]chunks.Sample{}, seriesSet)
@@ -227,7 +227,7 @@ func TestDataAvailableOnlyAfterCommit(t *testing.T) {
 	err = app.Commit()
 	require.NoError(t, err)
 
-	querier, err = db.Querier(0, 1)
+	querier, err = db.Querier(0, 1, "")
 	require.NoError(t, err)
 	defer querier.Close()
 
@@ -285,7 +285,7 @@ func TestNoPanicAfterWALCorruption(t *testing.T) {
 		}()
 		require.Equal(t, 1.0, prom_testutil.ToFloat64(db.head.metrics.walCorruptionsTotal), "WAL corruption count mismatch")
 
-		querier, err := db.Querier(0, maxt)
+		querier, err := db.Querier(0, maxt, "")
 		require.NoError(t, err)
 		seriesSet := query(t, querier, labels.MustNewMatcher(labels.MatchEqual, "", ""))
 		// The last sample should be missing as it was after the WAL segment corruption.
@@ -319,7 +319,7 @@ func TestDataNotAvailableAfterRollback(t *testing.T) {
 	require.NoError(t, err)
 
 	for _, typ := range []string{"float", "histogram", "floathistogram"} {
-		querier, err := db.Querier(0, 1)
+		querier, err := db.Querier(0, 1, "")
 		require.NoError(t, err)
 		seriesSet := query(t, querier, labels.MustNewMatcher(labels.MatchEqual, "type", typ))
 		require.Equal(t, map[string][]chunks.Sample{}, seriesSet)
@@ -425,7 +425,7 @@ func TestDBAppenderAddRef(t *testing.T) {
 
 	require.NoError(t, app2.Commit())
 
-	q, err := db.Querier(0, 200)
+	q, err := db.Querier(0, 200, "")
 	require.NoError(t, err)
 
 	res := query(t, q, labels.MustNewMatcher(labels.MatchEqual, "a", "b"))
@@ -518,7 +518,7 @@ func TestDeleteSimple(t *testing.T) {
 			}
 
 			// Compare the result.
-			q, err := db.Querier(0, numSamples)
+			q, err := db.Querier(0, numSamples, "")
 			require.NoError(t, err)
 
 			res := q.Select(ctx, false, nil, labels.MustNewMatcher(labels.MatchEqual, "a", "b"))
@@ -679,7 +679,7 @@ func TestSkippingInvalidValuesInSameTxn(t *testing.T) {
 	require.NoError(t, app.Commit())
 
 	// Make sure the right value is stored.
-	q, err := db.Querier(0, 10)
+	q, err := db.Querier(0, 10, "")
 	require.NoError(t, err)
 
 	ssMap := query(t, q, labels.MustNewMatcher(labels.MatchEqual, "a", "b"))
@@ -696,7 +696,7 @@ func TestSkippingInvalidValuesInSameTxn(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, app.Commit())
 
-	q, err = db.Querier(0, 10)
+	q, err = db.Querier(0, 10, "")
 	require.NoError(t, err)
 
 	ssMap = query(t, q, labels.MustNewMatcher(labels.MatchEqual, "a", "b"))
@@ -729,7 +729,7 @@ func TestDB_Snapshot(t *testing.T) {
 	require.NoError(t, err)
 	defer func() { require.NoError(t, db.Close()) }()
 
-	querier, err := db.Querier(mint, mint+1000)
+	querier, err := db.Querier(mint, mint+1000, "")
 	require.NoError(t, err)
 	defer func() { require.NoError(t, querier.Close()) }()
 
@@ -778,7 +778,7 @@ func TestDB_Snapshot_ChunksOutsideOfCompactedRange(t *testing.T) {
 	require.NoError(t, err)
 	defer func() { require.NoError(t, db.Close()) }()
 
-	querier, err := db.Querier(mint, mint+1000)
+	querier, err := db.Querier(mint, mint+1000, "")
 	require.NoError(t, err)
 	defer func() { require.NoError(t, querier.Close()) }()
 
@@ -846,7 +846,7 @@ func TestDB_SnapshotWithDelete(t *testing.T) {
 			defer func() { require.NoError(t, newDB.Close()) }()
 
 			// Compare the result.
-			q, err := newDB.Querier(0, numSamples)
+			q, err := newDB.Querier(0, numSamples, "")
 			require.NoError(t, err)
 			defer func() { require.NoError(t, q.Close()) }()
 
@@ -1022,7 +1022,7 @@ func TestDB_e2e(t *testing.T) {
 				}
 			}
 
-			q, err := db.Querier(mint, maxt)
+			q, err := db.Querier(mint, maxt, "")
 			require.NoError(t, err)
 
 			ss := q.Select(ctx, false, nil, qry.ms...)
@@ -1067,7 +1067,7 @@ func TestWALFlushedOnDBClose(t *testing.T) {
 	require.NoError(t, err)
 	defer func() { require.NoError(t, db.Close()) }()
 
-	q, err := db.Querier(0, 1)
+	q, err := db.Querier(0, 1, "")
 	require.NoError(t, err)
 
 	values, ws, err := q.LabelValues(ctx, "labelname", nil)
@@ -1285,7 +1285,7 @@ func TestTombstoneClean(t *testing.T) {
 		require.NoError(t, db.CleanTombstones())
 
 		// Compare the result.
-		q, err := db.Querier(0, numSamples)
+		q, err := db.Querier(0, numSamples, "")
 		require.NoError(t, err)
 		defer q.Close()
 
@@ -1850,7 +1850,7 @@ func TestNotMatcherSelectsLabelsUnsetSeries(t *testing.T) {
 		series: labelpairs[:1],
 	}}
 
-	q, err := db.Querier(0, 10)
+	q, err := db.Querier(0, 10, "")
 	require.NoError(t, err)
 	defer func() { require.NoError(t, q.Close()) }()
 
@@ -2061,7 +2061,7 @@ func TestQuerierWithBoundaryChunks(t *testing.T) {
 
 	require.GreaterOrEqual(t, len(db.blocks), 3, "invalid test, less than three blocks in DB")
 
-	q, err := db.Querier(blockRange, 2*blockRange)
+	q, err := db.Querier(blockRange, 2*blockRange, "")
 	require.NoError(t, err)
 	defer q.Close()
 
@@ -2378,7 +2378,7 @@ func TestDB_LabelNames(t *testing.T) {
 			appendSamples(db, 5, 9, tst.sampleLabels2)
 
 			// Testing DB (union).
-			q, err := db.Querier(math.MinInt64, math.MaxInt64)
+			q, err := db.Querier(math.MinInt64, math.MaxInt64, "")
 			require.NoError(t, err)
 			var ws annotations.Annotations
 			labelNames, ws, err = q.LabelNames(ctx, nil)
@@ -2580,7 +2580,7 @@ func TestDBReadOnly(t *testing.T) {
 		require.NoError(t, err)
 		require.Greater(t, expDbSize, dbSizeBeforeAppend, "db size didn't increase after an append")
 
-		q, err := dbWritable.Querier(math.MinInt64, math.MaxInt64)
+		q, err := dbWritable.Querier(math.MinInt64, math.MaxInt64, "")
 		require.NoError(t, err)
 		expSeries = query(t, q, matchAll)
 		cq, err := dbWritable.ChunkQuerier(math.MinInt64, math.MaxInt64)
@@ -2851,7 +2851,7 @@ func TestDBCannotSeePartialCommits(t *testing.T) {
 	inconsistencies := 0
 	for range 10 {
 		func() {
-			querier, err := db.Querier(0, 1000000)
+			querier, err := db.Querier(0, 1000000, "")
 			require.NoError(t, err)
 			defer querier.Close()
 
@@ -2885,7 +2885,7 @@ func TestDBQueryDoesntSeeAppendsAfterCreation(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	querierBeforeAdd, err := db.Querier(0, 1000000)
+	querierBeforeAdd, err := db.Querier(0, 1000000, "")
 	require.NoError(t, err)
 	defer querierBeforeAdd.Close()
 
@@ -2894,7 +2894,7 @@ func TestDBQueryDoesntSeeAppendsAfterCreation(t *testing.T) {
 	_, err = app.Append(0, labels.FromStrings("foo", "bar"), 0, 0)
 	require.NoError(t, err)
 
-	querierAfterAddButBeforeCommit, err := db.Querier(0, 1000000)
+	querierAfterAddButBeforeCommit, err := db.Querier(0, 1000000, "")
 	require.NoError(t, err)
 	defer querierAfterAddButBeforeCommit.Close()
 
@@ -2929,7 +2929,7 @@ func TestDBQueryDoesntSeeAppendsAfterCreation(t *testing.T) {
 	require.Empty(t, ws)
 	require.Equal(t, map[string][]sample{`{foo="bar"}`: {}}, seriesSet)
 
-	querierAfterCommit, err := db.Querier(0, 1000000)
+	querierAfterCommit, err := db.Querier(0, 1000000, "")
 	require.NoError(t, err)
 	defer querierAfterCommit.Close()
 
@@ -3239,7 +3239,7 @@ func TestCompactHead(t *testing.T) {
 	require.Len(t, db.Blocks(), 1)
 	require.Equal(t, int64(maxt), db.Head().MinTime())
 	defer func() { require.NoError(t, db.Close()) }()
-	querier, err := db.Querier(0, int64(maxt)-1)
+	querier, err := db.Querier(0, int64(maxt)-1, "")
 	require.NoError(t, err)
 	defer func() { require.NoError(t, querier.Close()) }()
 
@@ -3636,7 +3636,7 @@ func testQuerierShouldNotPanicIfHeadChunkIsTruncatedWhileReadingQueriedChunks(t 
 	// At this point we expect 2 mmap-ed head chunks.
 
 	// Get a querier and make sure it's closed only once the test is over.
-	querier, err := db.Querier(0, math.MaxInt64)
+	querier, err := db.Querier(0, math.MaxInt64, "")
 	require.NoError(t, err)
 	defer func() {
 		require.NoError(t, querier.Close())
@@ -5028,7 +5028,7 @@ func TestMultipleEncodingsCommitOrder(t *testing.T) {
 		requireEqualOOOSamples(t, oooCount, db)
 
 		// Verify samples querier.
-		querier, err := db.Querier(minT, maxT)
+		querier, err := db.Querier(minT, maxT, "")
 		require.NoError(t, err)
 		defer querier.Close()
 
@@ -5215,7 +5215,7 @@ func testOOOCompaction(t *testing.T, scenario sampleTypeScenario, addExtraSample
 			series2.String(): series2Samples,
 		}
 
-		q, err := db.Querier(math.MinInt64, math.MaxInt64)
+		q, err := db.Querier(math.MinInt64, math.MaxInt64, "")
 		require.NoError(t, err)
 
 		actRes := query(t, q, labels.MustNewMatcher(labels.MatchRegexp, "foo", "bar.*"))
@@ -5649,7 +5649,7 @@ func testOOOQueryAfterRestartWithSnapshotAndRemovedWBL(t *testing.T, scenario sa
 			series2.String(): series2Samples,
 		}
 
-		q, err := db.Querier(fromMins*time.Minute.Milliseconds(), toMins*time.Minute.Milliseconds())
+		q, err := db.Querier(fromMins*time.Minute.Milliseconds(), toMins*time.Minute.Milliseconds(), "")
 		require.NoError(t, err)
 
 		actRes := query(t, q, labels.MustNewMatcher(labels.MatchRegexp, "foo", "bar.*"))
@@ -5960,7 +5960,7 @@ func testQuerierOOOQuery(t *testing.T,
 				return expSamples[i].T() < expSamples[j].T()
 			})
 
-			querier, err := db.Querier(tc.queryMinT, tc.queryMaxT)
+			querier, err := db.Querier(tc.queryMinT, tc.queryMaxT, "")
 			require.NoError(t, err)
 			defer querier.Close()
 
@@ -6489,7 +6489,7 @@ func testOOONativeHistogramsWithCounterResets(t *testing.T, scenario sampleTypeS
 				expSamples[k] = v
 			}
 
-			querier, err := db.Querier(tc.queryMin, tc.queryMax)
+			querier, err := db.Querier(tc.queryMin, tc.queryMax, "")
 			require.NoError(t, err)
 			defer querier.Close()
 
@@ -6699,7 +6699,7 @@ func testOOOInterleavedImplicitCounterResets(t *testing.T, name string, scenario
 			require.NoError(t, app.Commit())
 
 			t.Run("querier", func(t *testing.T) {
-				querier, err := db.Querier(0, 10)
+				querier, err := db.Querier(0, 10, "")
 				require.NoError(t, err)
 				defer querier.Close()
 
@@ -6822,7 +6822,7 @@ func testOOOAppendAndQuery(t *testing.T, scenario sampleTypeScenario) {
 	}
 
 	testQuery := func(from, to int64) {
-		querier, err := db.Querier(from, to)
+		querier, err := db.Querier(from, to, "")
 		require.NoError(t, err)
 
 		seriesSet := query(t, querier, labels.MustNewMatcher(labels.MatchRegexp, "foo", "bar."))
@@ -6959,7 +6959,7 @@ func testOOODisabled(t *testing.T, scenario sampleTypeScenario) {
 	addSample(db, s1, 59, 59, true)    // Out of time window again.
 	addSample(db, s1, 301, 310, false) // More in-order samples.
 
-	querier, err := db.Querier(math.MinInt64, math.MaxInt64)
+	querier, err := db.Querier(math.MinInt64, math.MaxInt64, "")
 	require.NoError(t, err)
 
 	seriesSet := query(t, querier, labels.MustNewMatcher(labels.MatchRegexp, "foo", "bar."))
@@ -7019,7 +7019,7 @@ func testWBLAndMmapReplay(t *testing.T, scenario sampleTypeScenario) {
 	}
 
 	testQuery := func(exp map[string][]chunks.Sample) {
-		querier, err := db.Querier(math.MinInt64, math.MaxInt64)
+		querier, err := db.Querier(math.MinInt64, math.MaxInt64, "")
 		require.NoError(t, err)
 
 		seriesSet := query(t, querier, labels.MustNewMatcher(labels.MatchRegexp, "foo", "bar."))
@@ -7395,7 +7395,7 @@ func TestOOOHistogramCompactionWithCounterResets(t *testing.T) {
 				series2.String(): s2Samples,
 			}
 
-			q, err := db.Querier(math.MinInt64, math.MaxInt64)
+			q, err := db.Querier(math.MinInt64, math.MaxInt64, "")
 			require.NoError(t, err)
 			actRes := query(t, q, labels.MustNewMatcher(labels.MatchRegexp, "foo", "bar.*"))
 			requireEqualSeries(t, expRes, actRes, false)
@@ -7590,7 +7590,7 @@ func TestInterleavedInOrderAndOOOHistogramCompactionWithCounterResets(t *testing
 				series1.String(): s1Samples,
 			}
 
-			q, err := db.Querier(math.MinInt64, math.MaxInt64)
+			q, err := db.Querier(math.MinInt64, math.MaxInt64, "")
 			require.NoError(t, err)
 			actRes := query(t, q, labels.MustNewMatcher(labels.MatchRegexp, "foo", "bar.*"))
 			requireEqualSeries(t, expRes, actRes, false)
@@ -7882,7 +7882,7 @@ func TestWBLCorruption(t *testing.T) {
 			series1.String(): expSamples,
 		}
 
-		q, err := db.Querier(math.MinInt64, math.MaxInt64)
+		q, err := db.Querier(math.MinInt64, math.MaxInt64, "")
 		require.NoError(t, err)
 
 		actRes := query(t, q, labels.MustNewMatcher(labels.MatchRegexp, "foo", "bar.*"))
@@ -7998,7 +7998,7 @@ func testOOOMmapCorruption(t *testing.T, scenario sampleTypeScenario) {
 			series1.String(): expSamples,
 		}
 
-		q, err := db.Querier(math.MinInt64, math.MaxInt64)
+		q, err := db.Querier(math.MinInt64, math.MaxInt64, "")
 		require.NoError(t, err)
 
 		actRes := query(t, q, labels.MustNewMatcher(labels.MatchRegexp, "foo", "bar.*"))
@@ -8127,7 +8127,7 @@ func testOutOfOrderRuntimeConfig(t *testing.T, scenario sampleTypeScenario) {
 			series1.String(): expSamples,
 		}
 
-		q, err := db.Querier(math.MinInt64, math.MaxInt64)
+		q, err := db.Querier(math.MinInt64, math.MaxInt64, "")
 		require.NoError(t, err)
 
 		actRes := query(t, q, labels.MustNewMatcher(labels.MatchRegexp, "foo", "bar.*"))
@@ -8339,7 +8339,7 @@ func testNoGapAfterRestartWithOOO(t *testing.T, scenario sampleTypeScenario) {
 			series1.String(): expSamples,
 		}
 
-		q, err := db.Querier(math.MinInt64, math.MaxInt64)
+		q, err := db.Querier(math.MinInt64, math.MaxInt64, "")
 		require.NoError(t, err)
 
 		actRes := query(t, q, labels.MustNewMatcher(labels.MatchRegexp, "foo", "bar.*"))
@@ -8467,7 +8467,7 @@ func testWblReplayAfterOOODisableAndRestart(t *testing.T, scenario sampleTypeSce
 			series1.String(): expSamples,
 		}
 
-		q, err := db.Querier(math.MinInt64, math.MaxInt64)
+		q, err := db.Querier(math.MinInt64, math.MaxInt64, "")
 		require.NoError(t, err)
 
 		actRes := query(t, q, labels.MustNewMatcher(labels.MatchRegexp, "foo", "bar.*"))
@@ -8688,7 +8688,7 @@ func testHistogramAppendAndQueryHelper(t *testing.T, floatHistogram bool) {
 
 	testQuery := func(t *testing.T, name, value string, exp map[string][]chunks.Sample) {
 		t.Helper()
-		q, err := db.Querier(math.MinInt64, math.MaxInt64)
+		q, err := db.Querier(math.MinInt64, math.MaxInt64, "")
 		require.NoError(t, err)
 		act := query(t, q, labels.MustNewMatcher(labels.MatchRegexp, name, value))
 		require.Equal(t, exp, act)
@@ -8948,7 +8948,7 @@ func TestQueryHistogramFromBlocksWithCompaction(t *testing.T) {
 		require.NoError(t, db.reload())
 		require.Len(t, db.Blocks(), len(blockSeries))
 
-		q, err := db.Querier(math.MinInt64, math.MaxInt64)
+		q, err := db.Querier(math.MinInt64, math.MaxInt64, "")
 		require.NoError(t, err)
 		res := query(t, q, labels.MustNewMatcher(labels.MatchRegexp, "__name__", ".*"))
 		compareSeries(t, exp, res)
@@ -8965,7 +8965,7 @@ func TestQueryHistogramFromBlocksWithCompaction(t *testing.T) {
 		require.NoError(t, db.reload())
 		require.Len(t, db.Blocks(), 1)
 
-		q, err = db.Querier(math.MinInt64, math.MaxInt64)
+		q, err = db.Querier(math.MinInt64, math.MaxInt64, "")
 		require.NoError(t, err)
 		res = query(t, q, labels.MustNewMatcher(labels.MatchRegexp, "__name__", ".*"))
 
@@ -9080,7 +9080,7 @@ func TestOOONativeHistogramsSettings(t *testing.T) {
 
 		require.NoError(t, app.Commit())
 
-		q, err := db.Querier(math.MinInt, math.MaxInt64)
+		q, err := db.Querier(math.MinInt, math.MaxInt64, "")
 		require.NoError(t, err)
 		act := query(t, q, labels.MustNewMatcher(labels.MatchEqual, "foo", "bar"))
 		require.Equal(t, map[string][]chunks.Sample{
@@ -9108,7 +9108,7 @@ func TestOOONativeHistogramsSettings(t *testing.T) {
 
 		require.NoError(t, app.Commit())
 
-		q, err := db.Querier(math.MinInt, math.MaxInt64)
+		q, err := db.Querier(math.MinInt, math.MaxInt64, "")
 		require.NoError(t, err)
 		act := query(t, q, labels.MustNewMatcher(labels.MatchEqual, "foo", "bar"))
 		requireEqualSeries(t, map[string][]chunks.Sample{
@@ -9387,7 +9387,7 @@ func TestBlockQuerierAndBlockChunkQuerier(t *testing.T) {
 	require.NoError(t, db.reloadBlocks())
 	require.Len(t, db.Blocks(), 2)
 
-	querier, err := db.Querier(0, 500)
+	querier, err := db.Querier(0, 500, "")
 	require.NoError(t, err)
 	defer querier.Close()
 	matcher := labels.MustNewMatcher(labels.MatchEqual, labels.MetricName, "test_metric")

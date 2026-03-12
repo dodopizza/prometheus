@@ -49,7 +49,7 @@ func NewSampleAndChunkQueryableClient(
 	}
 }
 
-func (c *sampleAndChunkQueryableClient) Querier(mint, maxt int64) (storage.Querier, error) {
+func (c *sampleAndChunkQueryableClient) Querier(mint, maxt int64, description string) (storage.Querier, error) {
 	q := &querier{
 		mint:             mint,
 		maxt:             maxt,

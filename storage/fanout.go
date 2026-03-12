@@ -71,15 +71,15 @@ func (f *fanout) StartTime() (int64, error) {
 	return firstTime, nil
 }
 
-func (f *fanout) Querier(mint, maxt int64) (Querier, error) {
-	primary, err := f.primary.Querier(mint, maxt)
+func (f *fanout) Querier(mint, maxt int64, description string) (Querier, error) {
+	primary, err := f.primary.Querier(mint, maxt, description)
 	if err != nil {
 		return nil, err
 	}
 
 	secondaries := make([]Querier, 0, len(f.secondaries))
 	for _, storage := range f.secondaries {
-		querier, err := storage.Querier(mint, maxt)
+		querier, err := storage.Querier(mint, maxt, description)
 		if err != nil {
 			// Close already open Queriers, append potential errors to returned error.
 			errs := tsdb_errors.NewMulti(err, primary.Close())

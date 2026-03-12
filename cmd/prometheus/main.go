@@ -1675,9 +1675,9 @@ func (s *readyStorage) StartTime() (int64, error) {
 }
 
 // Querier implements the Storage interface.
-func (s *readyStorage) Querier(mint, maxt int64) (storage.Querier, error) {
+func (s *readyStorage) Querier(mint, maxt int64, description string) (storage.Querier, error) {
 	if x := s.get(); x != nil {
-		return x.Querier(mint, maxt)
+		return x.Querier(mint, maxt, description)
 	}
 	return nil, tsdb.ErrNotReady
 }

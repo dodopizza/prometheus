@@ -41,18 +41,18 @@ import (
 )
 
 // QueryFunc processes PromQL queries.
-type QueryFunc func(ctx context.Context, q string, t time.Time) (promql.Vector, error)
+type QueryFunc func(ctx context.Context, q string, t time.Time, description string) (promql.Vector, error)
 
 // EngineQueryFunc returns a new query function that executes instant queries against
 // the given engine.
 // It converts scalar into vector results.
 func EngineQueryFunc(engine promql.QueryEngine, q storage.Queryable) QueryFunc {
-	return func(ctx context.Context, qs string, t time.Time) (promql.Vector, error) {
+	return func(ctx context.Context, qs string, t time.Time, description string) (promql.Vector, error) {
 		q, err := engine.NewInstantQuery(ctx, q, nil, qs, t)
 		if err != nil {
 			return nil, err
 		}
-		res := q.Exec(ctx)
+		res := q.Exec(ctx, description)
 		if res.Err != nil {
 			return nil, res.Err
 		}

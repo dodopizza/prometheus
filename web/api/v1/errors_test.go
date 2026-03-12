@@ -190,7 +190,7 @@ func (t errorTestQueryable) ChunkQuerier(_, _ int64) (storage.ChunkQuerier, erro
 	return nil, t.err
 }
 
-func (t errorTestQueryable) Querier(_, _ int64) (storage.Querier, error) {
+func (t errorTestQueryable) Querier(_, _ int64, _ string) (storage.Querier, error) {
 	if t.q != nil {
 		return t.q, nil
 	}

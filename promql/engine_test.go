@@ -98,7 +98,7 @@ func TestQueryConcurrency(t *testing.T) {
 		q := engine.NewTestQuery(f)
 		wg.Add(1)
 		go func() {
-			q.Exec(ctx)
+			q.Exec(ctx, "")
 			wg.Done()
 		}()
 		select {
@@ -112,7 +112,7 @@ func TestQueryConcurrency(t *testing.T) {
 	q := engine.NewTestQuery(f)
 	wg.Add(1)
 	go func() {
-		q.Exec(ctx)
+		q.Exec(ctx, "")
 		wg.Done()
 	}()
 
@@ -171,7 +171,7 @@ func TestQueryTimeout(t *testing.T) {
 		return contextDone(ctx, "test statement execution")
 	})
 
-	res := query.Exec(ctx)
+	res := query.Exec(ctx, "")
 	require.Error(t, res.Err, "expected timeout error but got none")
 
 	var e promql.ErrQueryTimeout
@@ -203,7 +203,7 @@ func TestQueryCancel(t *testing.T) {
 	var res *promql.Result
 
 	go func() {
-		res = query1.Exec(ctx)
+		res = query1.Exec(ctx, "")
 		processing <- struct{}{}
 	}()
 
@@ -221,7 +221,7 @@ func TestQueryCancel(t *testing.T) {
 	})
 
 	query2.Cancel()
-	res = query2.Exec(ctx)
+	res = query2.Exec(ctx, "")
 	require.NoError(t, res.Err)
 }
 
@@ -270,14 +270,14 @@ func TestQueryError(t *testing.T) {
 	vectorQuery, err := engine.NewInstantQuery(ctx, queryable, nil, "foo", time.Unix(1, 0))
 	require.NoError(t, err)
 
-	res := vectorQuery.Exec(ctx)
+	res := vectorQuery.Exec(ctx, "")
 	require.Error(t, res.Err, "expected error on failed select but got none")
 	require.ErrorIs(t, res.Err, errStorage, "expected error doesn't match")
 
 	matrixQuery, err := engine.NewInstantQuery(ctx, queryable, nil, "foo[1m]", time.Unix(1, 0))
 	require.NoError(t, err)
 
-	res = matrixQuery.Exec(ctx)
+	res = matrixQuery.Exec(ctx, "")
 	require.Error(t, res.Err, "expected error on failed select but got none")
 	require.ErrorIs(t, res.Err, errStorage, "expected error doesn't match")
 }
@@ -286,7 +286,7 @@ type noopHintRecordingQueryable struct {
 	hints []*storage.SelectHints
 }
 
-func (h *noopHintRecordingQueryable) Querier(int64, int64) (storage.Querier, error) {
+func (h *noopHintRecordingQueryable) Querier(int64, int64, string) (storage.Querier, error) {
 	return &hintRecordingQuerier{Querier: &errQuerier{}, h: h}, nil
 }
 
@@ -609,7 +609,7 @@ func TestSelectHintsSetCorrectly(t *testing.T) {
 			}
 			require.NoError(t, err)
 
-			res := query.Exec(context.Background())
+			res := query.Exec(context.Background(), "")
 			require.NoError(t, res.Err)
 
 			require.Equal(t, tc.expected, hintsRecorder.hints)
@@ -645,7 +645,7 @@ func TestEngineShutdown(t *testing.T) {
 
 	var res *promql.Result
 	go func() {
-		res = query1.Exec(ctx)
+		res = query1.Exec(ctx, "")
 		processing <- struct{}{}
 	}()
 
@@ -664,7 +664,7 @@ func TestEngineShutdown(t *testing.T) {
 
 	// The second query is started after the engine shut down. It must
 	// be canceled immediately.
-	res2 := query2.Exec(ctx)
+	res2 := query2.Exec(ctx, "")
 	require.Error(t, res2.Err, "expected error on querying with canceled context but got none")
 
 	var e promql.ErrQueryCanceled
@@ -768,7 +768,7 @@ load 10s
 			}
 			require.NoError(t, err)
 
-			res := qry.Exec(context.Background())
+			res := qry.Exec(context.Background(), "")
 			if c.ShouldError {
 				require.Error(t, res.Err, "expected error for the query %q", c.Query)
 				return
@@ -1311,7 +1311,7 @@ load 10s
 				}
 				require.NoError(t, err)
 
-				res := qry.Exec(context.Background())
+				res := qry.Exec(context.Background(), "")
 				require.Equal(t, expErr, res.Err)
 
 				return qry.Stats()
@@ -1490,7 +1490,7 @@ load 10s
 				}
 				require.NoError(t, err)
 
-				res := qry.Exec(context.Background())
+				res := qry.Exec(context.Background(), "")
 				stats := qry.Stats()
 				require.Equal(t, expError, res.Err)
 				require.NotNil(t, stats)
@@ -1657,7 +1657,7 @@ func TestExtendedRangeSelectors(t *testing.T) {
 			engine = promqltest.NewTestEngine(t, false, 0, 100)
 			qry, err := engine.NewInstantQuery(context.Background(), storage, nil, tc.query, tc.t)
 			require.NoError(t, err)
-			res := qry.Exec(context.Background())
+			res := qry.Exec(context.Background(), "")
 			require.NoError(t, res.Err)
 			require.Equal(t, tc.expected, res.Value)
 		})
@@ -1914,7 +1914,7 @@ load 1ms
 			}
 			require.NoError(t, err)
 
-			res := qry.Exec(context.Background())
+			res := qry.Exec(context.Background(), "")
 			require.NoError(t, res.Err)
 			if expMat, ok := c.result.(promql.Matrix); ok {
 				sort.Sort(expMat)
@@ -2290,7 +2290,7 @@ func TestSubquerySelector(t *testing.T) {
 					qry, err := engine.NewInstantQuery(context.Background(), storage, nil, c.Query, c.Start)
 					require.NoError(t, err)
 
-					res := qry.Exec(context.Background())
+					res := qry.Exec(context.Background(), "")
 					require.Equal(t, c.Result.Err, res.Err)
 					mat := res.Value.(promql.Matrix)
 					sort.Sort(mat)
@@ -2329,7 +2329,7 @@ func TestQueryLogger_basic(t *testing.T) {
 		query := engine.NewTestQuery(func(ctx context.Context) error {
 			return contextDone(ctx, "test statement execution")
 		})
-		res := query.Exec(ctx)
+		res := query.Exec(ctx, "")
 		require.NoError(t, res.Err)
 	}
 
@@ -2403,7 +2403,7 @@ func TestQueryLogger_fields(t *testing.T) {
 		return contextDone(ctx, "test statement execution")
 	})
 
-	res := query.Exec(ctx)
+	res := query.Exec(ctx, "")
 	require.NoError(t, res.Err)
 
 	logLines := getLogLines(t, ql1File)
@@ -2437,7 +2437,7 @@ func TestQueryLogger_error(t *testing.T) {
 		return testErr
 	})
 
-	res := query.Exec(ctx)
+	res := query.Exec(ctx, "")
 	require.Error(t, res.Err, "query should have failed")
 
 	logLines := getLogLines(t, ql1File)
@@ -3416,7 +3416,7 @@ metric 0 1 2
 			qry, err := engine.NewInstantQuery(context.Background(), storage, opts, query, c.ts)
 			require.NoError(t, err)
 
-			res := qry.Exec(context.Background())
+			res := qry.Exec(context.Background(), "")
 			require.NoError(t, res.Err)
 			vec, ok := res.Value.(promql.Vector)
 			require.True(t, ok)
@@ -3448,7 +3448,7 @@ histogram {{sum:4 count:4 buckets:[2 2]}} {{sum:6 count:6 buckets:[3 3]}} {{sum:
 	engine := promqltest.NewTestEngine(t, false, 0, promqltest.DefaultMaxSamplesPerQuery)
 
 	verify := func(t *testing.T, qry promql.Query, expected []histogram.FloatHistogram) {
-		res := qry.Exec(context.Background())
+		res := qry.Exec(context.Background(), "")
 		require.NoError(t, res.Err)
 
 		m, ok := res.Value.(promql.Matrix)
@@ -3719,7 +3719,7 @@ func TestRateAnnotations(t *testing.T) {
 			require.NoError(t, err)
 			t.Cleanup(query.Close)
 
-			res := query.Exec(context.Background())
+			res := query.Exec(context.Background(), "")
 			require.NoError(t, res.Err)
 
 			warnings, infos := res.Warnings.AsStrings(testCase.expr, 0, 0)
@@ -3799,7 +3799,7 @@ func TestHistogramRateWithFloatStaleness(t *testing.T) {
 	require.NoError(t, err)
 	defer q.Close()
 
-	res := q.Exec(context.Background())
+	res := q.Exec(context.Background(), "")
 	require.NoError(t, res.Err)
 
 	vec, err := res.Vector()
@@ -4017,7 +4017,7 @@ func TestInconsistentHistogramCount(t *testing.T) {
 
 	query, err = engine.NewInstantQuery(context.Background(), queryable, nil, "(rate(series_1[1m]))", time.UnixMilli(maxt))
 	require.NoError(t, err)
-	queryResult = query.Exec(context.Background())
+	queryResult = query.Exec(context.Background(), "")
 	require.NoError(t, queryResult.Err)
 	require.NotNil(t, queryResult)
 	v, err = queryResult.Vector()
@@ -4030,7 +4030,7 @@ func TestInconsistentHistogramCount(t *testing.T) {
 
 	query, err = engine.NewInstantQuery(context.Background(), queryable, nil, "histogram_count((rate(series_1[1m])))", time.UnixMilli(maxt))
 	require.NoError(t, err)
-	queryResult = query.Exec(context.Background())
+	queryResult = query.Exec(context.Background(), "")
 	require.NoError(t, queryResult.Err)
 	require.NotNil(t, queryResult)
 	v, err = queryResult.Vector()
@@ -4063,7 +4063,7 @@ func TestSubQueryHistogramsCopy(t *testing.T) {
 
 		q, err := engine.NewRangeQuery(ctx, queryable, nil, subQuery, start, end, step)
 		require.NoError(t, err)
-		q.Exec(ctx)
+		q.Exec(ctx, "")
 		q.Close()
 		queryable.Close()
 	}
@@ -4074,7 +4074,7 @@ func TestSubQueryHistogramsCopy(t *testing.T) {
 
 		q, err := engine.NewRangeQuery(ctx, queryable, nil, testQuery, start, end, step)
 		require.NoError(t, err)
-		result := q.Exec(ctx)
+		result := q.Exec(ctx, "")
 
 		mat, err := result.Matrix()
 		require.NoError(t, err)
@@ -4181,7 +4181,7 @@ func TestHistogram_CounterResetHint(t *testing.T) {
 			q, err := engine.NewInstantQuery(ctx, queryable, nil, tc.query, baseT.Add(2*time.Minute))
 			require.NoError(t, err)
 			defer q.Close()
-			res := q.Exec(ctx)
+			res := q.Exec(ctx, "")
 			require.NoError(t, res.Err)
 			v, err := res.Vector()
 			require.NoError(t, err)

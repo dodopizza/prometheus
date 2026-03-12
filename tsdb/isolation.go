@@ -33,6 +33,7 @@ type isolationState struct {
 	prev *isolationState
 
 	creationStack string
+	description   string
 }
 
 // Close closes the state.
@@ -74,8 +75,6 @@ type isolation struct {
 	readsOpen *isolationState
 	// If true, writes are not tracked while reads are still tracked.
 	disabled bool
-	// Counter for unique isolation state IDs, protected by readMtx.
-	nextIsoStateId uint64
 }
 
 func newIsolation(disabled bool) *isolation {
@@ -90,7 +89,6 @@ func newIsolation(disabled bool) *isolation {
 	return &isolation{
 		appendsOpen:     map[uint64]*isolationAppender{},
 		appendsOpenList: appender,
-		nextIsoStateId:  1,
 		readsOpen:       isoState,
 		disabled:        disabled,
 		appendersPool:   sync.Pool{New: func() any { return &isolationAppender{} }},
@@ -141,12 +139,9 @@ func (i *isolation) lowestAppendTime() int64 {
 
 // State returns an object used to control isolation
 // between a query and appends. Must be closed when complete.
-func (i *isolation) State(mint, maxt int64) *isolationState {
+func (i *isolation) State(mint, maxt int64, description string) *isolationState {
 	i.appendMtx.RLock() // Take append mutex before read mutex.
 	defer i.appendMtx.RUnlock()
-
-	i.readMtx.Lock()
-	defer i.readMtx.Unlock()
 
 	// We need to track reads even when isolation is disabled, so that head
 	// truncation can wait till reads overlapping that range have finished.
@@ -158,11 +153,14 @@ func (i *isolation) State(mint, maxt int64) *isolationState {
 		mint:              mint,
 		maxt:              maxt,
 		creationStack:     string(debug.Stack()),
+		description:       description,
 	}
-	i.nextIsoStateId++
 	for k := range i.appendsOpen {
 		isoState.incompleteAppends[k] = struct{}{}
 	}
+
+	i.readMtx.Lock()
+	defer i.readMtx.Unlock()
 
 	isoState.prev = i.readsOpen
 	isoState.next = i.readsOpen.next

@@ -789,7 +789,9 @@ func (h *Handler) consoles(w http.ResponseWriter, r *http.Request) {
 		"__console_"+name,
 		data,
 		h.now(),
-		template.QueryFunc(rules.EngineQueryFunc(h.queryEngine, h.storage)),
+		template.QueryFunc(func(ctx context.Context, s string, t time.Time) (promql.Vector, error) {
+			return rules.EngineQueryFunc(h.queryEngine, h.storage)(ctx, s, t, "")
+		}),
 		h.options.ExternalURL,
 		nil,
 	)

@@ -59,7 +59,7 @@ func Example() {
 	// ... adding more samples.
 
 	// Open a querier for reading.
-	querier, err := db.Querier(math.MinInt64, math.MaxInt64)
+	querier, err := db.Querier(math.MinInt64, math.MaxInt64, "")
 	noErr(err)
 	ss := querier.Select(context.Background(), false, nil, labels.MustNewMatcher(labels.MatchEqual, "foo", "bar"))
 

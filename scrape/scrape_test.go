@@ -156,7 +156,7 @@ func runScrapeLoopTest(t *testing.T, s *teststorage.TestStorage, expectOutOfOrde
 	// Query the samples back from the storage.
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	q, err := s.Querier(time.Time{}.UnixNano(), time.Now().UnixNano())
+	q, err := s.Querier(time.Time{}.UnixNano(), time.Now().UnixNano(), "")
 	require.NoError(t, err)
 	defer q.Close()
 
@@ -1607,7 +1607,7 @@ func TestSetOptionsHandlingStaleness(t *testing.T) {
 	ctx1, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	q, err := s.Querier(0, time.Now().UnixNano())
+	q, err := s.Querier(0, time.Now().UnixNano(), "")
 
 	require.NoError(t, err)
 	defer q.Close()
@@ -3640,7 +3640,7 @@ func TestScrapeLoopDiscardDuplicateLabels(t *testing.T) {
 	// which would cause ErrDuplicateSampleForTimestamp errors on the next append.
 	sl.cache.iterDone(true)
 
-	q, err := s.Querier(time.Time{}.UnixNano(), 0)
+	q, err := s.Querier(time.Time{}.UnixNano(), 0, "")
 	require.NoError(t, err)
 	series := q.Select(ctx, false, nil, labels.MustNewMatcher(labels.MatchRegexp, "__name__", ".*"))
 	require.False(t, series.Next(), "series found in tsdb")
@@ -3652,7 +3652,7 @@ func TestScrapeLoopDiscardDuplicateLabels(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, slApp.Commit())
 
-	q, err = s.Querier(time.Time{}.UnixNano(), 0)
+	q, err = s.Querier(time.Time{}.UnixNano(), 0, "")
 	require.NoError(t, err)
 	series = q.Select(ctx, false, nil, labels.MustNewMatcher(labels.MatchEqual, "le", "500"))
 	require.True(t, series.Next(), "series not found in tsdb")
@@ -3682,7 +3682,7 @@ func TestScrapeLoopDiscardUnnamedMetrics(t *testing.T) {
 	require.NoError(t, slApp.Rollback())
 	require.Equal(t, errNameLabelMandatory, err)
 
-	q, err := s.Querier(time.Time{}.UnixNano(), 0)
+	q, err := s.Querier(time.Time{}.UnixNano(), 0, "")
 	require.NoError(t, err)
 	series := q.Select(ctx, false, nil, labels.MustNewMatcher(labels.MatchRegexp, "__name__", ".*"))
 	require.False(t, series.Next(), "series found in tsdb")
@@ -4042,7 +4042,7 @@ func TestScrapeReportSingleAppender(t *testing.T) {
 
 	start := time.Now()
 	for time.Since(start) < 3*time.Second {
-		q, err := s.Querier(time.Time{}.UnixNano(), time.Now().UnixNano())
+		q, err := s.Querier(time.Time{}.UnixNano(), time.Now().UnixNano(), "")
 		require.NoError(t, err)
 		series := q.Select(ctx, false, nil, labels.MustNewMatcher(labels.MatchRegexp, "__name__", ".+"))
 
@@ -4104,7 +4104,7 @@ func TestScrapeReportLimit(t *testing.T) {
 	}
 
 	ctx := t.Context()
-	q, err := s.Querier(time.Time{}.UnixNano(), time.Now().UnixNano())
+	q, err := s.Querier(time.Time{}.UnixNano(), time.Now().UnixNano(), "")
 	require.NoError(t, err)
 	defer q.Close()
 	series := q.Select(ctx, false, nil, labels.MustNewMatcher(labels.MatchRegexp, "__name__", "up"))
@@ -4158,7 +4158,7 @@ func TestScrapeUTF8(t *testing.T) {
 	}
 
 	ctx := t.Context()
-	q, err := s.Querier(time.Time{}.UnixNano(), time.Now().UnixNano())
+	q, err := s.Querier(time.Time{}.UnixNano(), time.Now().UnixNano(), "")
 	require.NoError(t, err)
 	defer q.Close()
 	series := q.Select(ctx, false, nil, labels.MustNewMatcher(labels.MatchRegexp, "__name__", "with.dots"))
@@ -4393,7 +4393,7 @@ test_summary_count 199
 	}
 
 	ctx := t.Context()
-	q, err := simpleStorage.Querier(time.Time{}.UnixNano(), time.Now().UnixNano())
+	q, err := simpleStorage.Querier(time.Time{}.UnixNano(), time.Now().UnixNano(), "")
 	require.NoError(t, err)
 	defer q.Close()
 
@@ -4866,7 +4866,7 @@ metric: <
 				require.NoError(t, app.Commit())
 
 				ctx := t.Context()
-				q, err := simpleStorage.Querier(time.Time{}.UnixNano(), time.Now().UnixNano())
+				q, err := simpleStorage.Querier(time.Time{}.UnixNano(), time.Now().UnixNano(), "")
 				require.NoError(t, err)
 				defer q.Close()
 
@@ -4978,7 +4978,7 @@ disk_usage_bytes 456
 	}
 
 	ctx := t.Context()
-	q, err := simpleStorage.Querier(time.Time{}.UnixNano(), time.Now().UnixNano())
+	q, err := simpleStorage.Querier(time.Time{}.UnixNano(), time.Now().UnixNano(), "")
 	require.NoError(t, err)
 	defer q.Close()
 
@@ -5387,7 +5387,7 @@ scrape_configs:
 
 	// Wait for the scrape loop to scrape the target.
 	require.Eventually(t, func() bool {
-		q, err := s.Querier(0, math.MaxInt64)
+		q, err := s.Querier(0, math.MaxInt64, "")
 		require.NoError(t, err)
 		seriesS := q.Select(context.Background(), false, nil, labels.MustNewMatcher(labels.MatchEqual, "__name__", "testing_example_native_histogram"))
 		countSeries := 0
@@ -5398,7 +5398,7 @@ scrape_configs:
 	}, 5*time.Second, 100*time.Millisecond)
 
 	// Check that native histogram schema is as expected.
-	q, err := s.Querier(0, math.MaxInt64)
+	q, err := s.Querier(0, math.MaxInt64, "")
 	require.NoError(t, err)
 	seriesS := q.Select(context.Background(), false, nil, labels.MustNewMatcher(labels.MatchEqual, "__name__", "testing_example_native_histogram"))
 	histogramSamples := []*histogram.Histogram{}

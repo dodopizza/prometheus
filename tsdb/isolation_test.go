@@ -43,7 +43,7 @@ func TestIsolation(t *testing.T) {
 	require.Equal(t, int64(10), iso.lowestAppendTime())
 
 	// Now we start a read.
-	stateA := iso.State(10, 20)
+	stateA := iso.State(10, 20, "")
 	require.Equal(t, 1, countOpenReads(iso))
 
 	// Second appender.
@@ -145,7 +145,7 @@ func BenchmarkIsolationWithState(b *testing.B) {
 					<-start
 
 					for b.Loop() {
-						s := iso.State(math.MinInt64, math.MaxInt64)
+						s := iso.State(math.MinInt64, math.MaxInt64, "")
 						s.Close()
 					}
 				}()

@@ -521,7 +521,7 @@ func (api *API) query(r *http.Request) (result apiFuncResult) {
 
 	ctx = httputil.ContextFromRequest(ctx, r)
 
-	res := qry.Exec(ctx)
+	res := qry.Exec(ctx, "")
 	if res.Err != nil {
 		return apiFuncResult{nil, returnAPIError(res.Err), res.Warnings, qry.Close}
 	}
@@ -645,7 +645,7 @@ func (api *API) queryRange(r *http.Request) (result apiFuncResult) {
 
 	ctx = httputil.ContextFromRequest(ctx, r)
 
-	res := qry.Exec(ctx)
+	res := qry.Exec(ctx, "")
 	if res.Err != nil {
 		return apiFuncResult{nil, returnAPIError(res.Err), res.Warnings, qry.Close}
 	}
@@ -760,7 +760,7 @@ func (api *API) labelNames(r *http.Request) apiFuncResult {
 		Limit: toHintLimit(limit),
 	}
 
-	q, err := api.Queryable.Querier(timestamp.FromTime(start), timestamp.FromTime(end))
+	q, err := api.Queryable.Querier(timestamp.FromTime(start), timestamp.FromTime(end), "")
 	if err != nil {
 		return apiFuncResult{nil, returnAPIError(err), nil, nil}
 	}
@@ -848,7 +848,7 @@ func (api *API) labelValues(r *http.Request) (result apiFuncResult) {
 		Limit: toHintLimit(limit),
 	}
 
-	q, err := api.Queryable.Querier(timestamp.FromTime(start), timestamp.FromTime(end))
+	q, err := api.Queryable.Querier(timestamp.FromTime(start), timestamp.FromTime(end), "")
 	if err != nil {
 		return apiFuncResult{nil, &apiError{errorExec, err}, nil, nil}
 	}
@@ -963,7 +963,7 @@ func (api *API) series(r *http.Request) (result apiFuncResult) {
 		return invalidParamError(err, "match[]")
 	}
 
-	q, err := api.Queryable.Querier(timestamp.FromTime(start), timestamp.FromTime(end))
+	q, err := api.Queryable.Querier(timestamp.FromTime(start), timestamp.FromTime(end), "")
 	if err != nil {
 		return apiFuncResult{nil, returnAPIError(err), nil, nil}
 	}

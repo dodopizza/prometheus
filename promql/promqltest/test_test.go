@@ -124,7 +124,7 @@ func TestLazyLoader_WithSamplesTill(t *testing.T) {
 
 				// Check the series.
 				queryable := suite.Queryable()
-				querier, err := queryable.Querier(math.MinInt64, math.MaxInt64)
+				querier, err := queryable.Querier(math.MinInt64, math.MaxInt64, "")
 				require.NoError(t, err)
 				for _, s := range tc.series {
 					var matchers []*labels.Matcher

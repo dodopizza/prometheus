@@ -431,7 +431,7 @@ func testCombinedAppenderOnTSDB(t *testing.T, ingestCTZeroSample bool) {
 				require.Empty(t, output.String(), "unexpected log output")
 			}
 
-			q, err := db.Querier(int64(math.MinInt64), int64(math.MaxInt64))
+			q, err := db.Querier(int64(math.MinInt64), int64(math.MaxInt64), "")
 			require.NoError(t, err)
 
 			ss := q.Select(ctx, false, &storage.SelectHints{

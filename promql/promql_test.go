@@ -90,7 +90,7 @@ func TestConcurrentRangeQueries(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			res := qry.Exec(ctx)
+			res := qry.Exec(ctx, "")
 			if res.Err != nil {
 				t.Logf("Query: %q, steps: %d, result: %s", c.expr, c.steps, res.Err)
 				return res.Err

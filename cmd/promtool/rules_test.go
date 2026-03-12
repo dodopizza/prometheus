@@ -125,7 +125,7 @@ func TestBackfillRuleIntegration(t *testing.T) {
 				blocks := db.Blocks()
 				require.Len(t, blocks, (i+1)*tt.expectedBlockCount)
 
-				q, err := db.Querier(math.MinInt64, math.MaxInt64)
+				q, err := db.Querier(math.MinInt64, math.MaxInt64, "")
 				require.NoError(t, err)
 
 				selectedSeries := q.Select(ctx, false, nil, labels.MustNewMatcher(labels.MatchRegexp, "", ".*"))
@@ -251,7 +251,7 @@ func TestBackfillLabels(t *testing.T) {
 	db, err := tsdb.Open(tmpDir, nil, nil, opts, nil)
 	require.NoError(t, err)
 
-	q, err := db.Querier(math.MinInt64, math.MaxInt64)
+	q, err := db.Querier(math.MinInt64, math.MaxInt64, "")
 	require.NoError(t, err)
 
 	t.Run("correct-labels", func(t *testing.T) {

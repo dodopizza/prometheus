@@ -240,7 +240,7 @@ type notReadyReadStorage struct {
 	LocalStorage
 }
 
-func (notReadyReadStorage) Querier(int64, int64) (storage.Querier, error) {
+func (notReadyReadStorage) Querier(int64, int64, string) (storage.Querier, error) {
 	return nil, fmt.Errorf("wrap: %w", tsdb.ErrNotReady)
 }
 

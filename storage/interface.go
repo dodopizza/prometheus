@@ -96,7 +96,7 @@ type ExemplarStorage interface {
 // Use it when you need to have access to all samples without chunk encoding abstraction e.g promQL.
 type Queryable interface {
 	// Querier returns a new Querier on the storage.
-	Querier(mint, maxt int64) (Querier, error)
+	Querier(mint, maxt int64, description string) (Querier, error)
 }
 
 // A MockQueryable is used for testing purposes so that a mock Querier can be used.
@@ -104,7 +104,7 @@ type MockQueryable struct {
 	MockQuerier Querier
 }
 
-func (q *MockQueryable) Querier(int64, int64) (Querier, error) {
+func (q *MockQueryable) Querier(int64, int64, string) (Querier, error) {
 	return q.MockQuerier, nil
 }
 
@@ -251,7 +251,7 @@ type LabelHints struct {
 type QueryableFunc func(mint, maxt int64) (Querier, error)
 
 // Querier calls f() with the given parameters.
-func (f QueryableFunc) Querier(mint, maxt int64) (Querier, error) {
+func (f QueryableFunc) Querier(mint, maxt int64, description string) (Querier, error) {
 	return f(mint, maxt)
 }
 

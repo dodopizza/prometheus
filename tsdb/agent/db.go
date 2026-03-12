@@ -745,7 +745,7 @@ func (*DB) StartTime() (int64, error) {
 }
 
 // Querier implements the Storage interface.
-func (*DB) Querier(int64, int64) (storage.Querier, error) {
+func (*DB) Querier(int64, int64, string) (storage.Querier, error) {
 	return nil, ErrUnsupported
 }
 

@@ -1215,7 +1215,8 @@ func (h *Head) WaitForPendingReadersInTimeRange(mint, maxt int64) {
 				"maxt", maxt,
 				"readerMint", s.mint,
 				"readerMaxt", s.maxt,
-				"readerStack", s.creationStack)
+				"readerStack", s.creationStack,
+				"description", s.description)
 			time.Sleep(500 * time.Millisecond)
 		}
 	}
@@ -1502,7 +1503,7 @@ func (h *RangeHead) Index() (IndexReader, error) {
 func (h *RangeHead) Chunks() (ChunkReader, error) {
 	var isoState *isolationState
 	if !h.isolationOff {
-		isoState = h.head.iso.State(h.mint, h.maxt)
+		isoState = h.head.iso.State(h.mint, h.maxt, "")
 	}
 	return h.head.chunksRange(h.mint, h.maxt, isoState)
 }

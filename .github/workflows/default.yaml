@@ -36,7 +36,6 @@ jobs:
           promu crossbuild -p linux/amd64
           make npm_licenses
           make common-docker-amd64
-          docker image list
 
       - name: Log in to GHCR
         uses: docker/login-action@v3

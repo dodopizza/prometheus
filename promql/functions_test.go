@@ -61,7 +61,7 @@ func TestDeriv(t *testing.T) {
 	query, err := engine.NewInstantQuery(ctx, storage, nil, "deriv(foo[30m])", timestamp.Time(1493712846939))
 	require.NoError(t, err)
 
-	result := query.Exec(ctx)
+	result := query.Exec(ctx, "")
 	require.NoError(t, result.Err)
 
 	vec, _ := result.Vector()
