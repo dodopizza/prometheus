@@ -1211,11 +1211,11 @@ func (h *Head) WaitForPendingReadersInTimeRange(mint, maxt int64) {
 			break
 		} else {
 			slog.Info("Found pending open reader, sleeping for 0.5s",
-				"id", s.id, "mint",
-				mint, "maxt",
-				maxt, "readerMint",
-				s.mint, "readerMaxt",
-				s.maxt)
+				"mint", mint,
+				"maxt", maxt,
+				"readerMint", s.mint,
+				"readerMaxt", s.maxt,
+				"readerStack", s.creationStack)
 			time.Sleep(500 * time.Millisecond)
 		}
 	}
