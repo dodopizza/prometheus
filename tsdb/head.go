@@ -1191,20 +1191,33 @@ func (h *Head) truncateMemory(mint int64) (err error) {
 // The mint is inclusive and maxt is the truncation time hence exclusive.
 func (h *Head) WaitForPendingReadersInTimeRange(mint, maxt int64) {
 	maxt-- // Making it inclusive before checking overlaps.
-	overlaps := func() bool {
+	overlaps := func() (bool, *isolationState) {
 		o := false
+		var i *isolationState
 		h.iso.TraverseOpenReads(func(s *isolationState) bool {
 			if s.mint <= maxt && mint <= s.maxt {
 				// Overlaps with the truncation range.
 				o = true
+				i = s
 				return false
 			}
 			return true
 		})
-		return o
+		return o, i
 	}
-	for overlaps() {
-		time.Sleep(500 * time.Millisecond)
+	for {
+		o, s := overlaps()
+		if !o {
+			break
+		} else {
+			slog.Info("Found pending open reader, sleeping for 0.5s",
+				"id", s.id, "mint",
+				mint, "maxt",
+				maxt, "readerMint",
+				s.mint, "readerMaxt",
+				s.maxt)
+			time.Sleep(500 * time.Millisecond)
+		}
 	}
 }
 
