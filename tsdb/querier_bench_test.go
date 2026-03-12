@@ -294,7 +294,7 @@ func benchmarkSelect(b *testing.B, queryable storage.Queryable, numSeries int, s
 	b.ResetTimer()
 	for s := 1; s <= numSeries; s *= 10 {
 		b.Run(fmt.Sprintf("%dof%d", s, numSeries), func(b *testing.B) {
-			q, err := queryable.Querier(0, int64(s-1))
+			q, err := queryable.Querier(0, int64(s-1), "")
 			require.NoError(b, err)
 
 			b.ResetTimer()
@@ -342,7 +342,7 @@ func BenchmarkQuerierSelect(b *testing.B) {
 // Type wrapper to let a Block be a Queryable in benchmarkSelect().
 type queryableBlock Block
 
-func (pb *queryableBlock) Querier(mint, maxt int64) (storage.Querier, error) {
+func (pb *queryableBlock) Querier(mint, maxt int64, description string) (storage.Querier, error) {
 	return NewBlockQuerier((*Block)(pb), mint, maxt)
 }
 

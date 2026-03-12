@@ -504,7 +504,7 @@ Outer:
 			fmt.Printf("DEBUG: Failed querying, expr: %q, err: %v\n", expr, err)
 			return errs
 		}
-		res := q.Exec(suite.Context())
+		res := q.Exec(suite.Context(), "")
 		if res.Err != nil {
 			fmt.Printf("DEBUG: Failed query exec, expr: %q, err: %v\n", expr, res.Err)
 			return errs
@@ -580,7 +580,7 @@ func query(ctx context.Context, qs string, t time.Time, engine *promql.Engine, q
 	if err != nil {
 		return nil, err
 	}
-	res := q.Exec(ctx)
+	res := q.Exec(ctx, "")
 	if res.Err != nil {
 		return nil, res.Err
 	}

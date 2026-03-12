@@ -154,14 +154,14 @@ func (*Storage) StartTime() (int64, error) {
 // Returned querier will never return error as all queryables are assumed best effort.
 // Additionally all returned queriers ensure that its Select's SeriesSets have ready data after first `Next` invoke.
 // This is because Prometheus (fanout and secondary queries) can't handle the stream failing half way through by design.
-func (s *Storage) Querier(mint, maxt int64) (storage.Querier, error) {
+func (s *Storage) Querier(mint, maxt int64, description string) (storage.Querier, error) {
 	s.mtx.Lock()
 	queryables := s.queryables
 	s.mtx.Unlock()
 
 	queriers := make([]storage.Querier, 0, len(queryables))
 	for _, queryable := range queryables {
-		q, err := queryable.Querier(mint, maxt)
+		q, err := queryable.Querier(mint, maxt, description)
 		if err != nil {
 			return nil, err
 		}

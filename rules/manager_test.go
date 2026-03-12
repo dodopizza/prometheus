@@ -167,7 +167,7 @@ func TestAlertingRule(t *testing.T) {
 
 		evalTime := baseTime.Add(test.time)
 
-		res, err := rule.Eval(context.TODO(), 0, evalTime, EngineQueryFunc(ng, storage), nil, 0)
+		res, err := rule.Eval(context.TODO(), 0, evalTime, EngineQueryFunc(ng, storage), nil, 0, "")
 		require.NoError(t, err)
 
 		var filteredRes promql.Vector // After removing 'ALERTS_FOR_STATE' samples.
@@ -316,7 +316,7 @@ func TestForStateAddSamples(t *testing.T) {
 					forState = float64(value.StaleNaN)
 				}
 
-				res, err := rule.Eval(context.TODO(), queryOffset, evalTime, EngineQueryFunc(ng, storage), nil, 0)
+				res, err := rule.Eval(context.TODO(), queryOffset, evalTime, EngineQueryFunc(ng, storage), nil, 0, "")
 				require.NoError(t, err)
 
 				var filteredRes promql.Vector // After removing 'ALERTS' samples.
@@ -581,7 +581,7 @@ func TestStaleness(t *testing.T) {
 		group.Eval(ctx, time.Unix(1, 0).Add(queryOffset))
 		group.Eval(ctx, time.Unix(2, 0).Add(queryOffset))
 
-		querier, err := st.Querier(0, 2000)
+		querier, err := st.Querier(0, 2000, "")
 		require.NoError(t, err)
 		defer querier.Close()
 
@@ -747,7 +747,7 @@ func TestDeletedRuleMarkedStale(t *testing.T) {
 
 	newGroup.Eval(context.Background(), time.Unix(0, 0))
 
-	querier, err := st.Querier(0, 2000)
+	querier, err := st.Querier(0, 2000, "")
 	require.NoError(t, err)
 	defer querier.Close()
 
@@ -1172,7 +1172,7 @@ func TestMetricsStalenessOnManagerShutdown(t *testing.T) {
 
 func countStaleNaN(t *testing.T, st storage.Storage) int {
 	var c int
-	querier, err := st.Querier(0, time.Now().Unix()*1000)
+	querier, err := st.Querier(0, time.Now().Unix()*1000, "")
 	require.NoError(t, err)
 	defer querier.Close()
 
@@ -1497,7 +1497,7 @@ func TestNativeHistogramsInRecordingRules(t *testing.T) {
 
 	group.Eval(context.Background(), ts.Add(10*time.Second))
 
-	q, err := db.Querier(ts.UnixMilli(), ts.Add(20*time.Second).UnixMilli())
+	q, err := db.Querier(ts.UnixMilli(), ts.Add(20*time.Second).UnixMilli(), "")
 	require.NoError(t, err)
 	ss := q.Select(context.Background(), false, nil, labels.MustNewMatcher(labels.MatchEqual, "__name__", "sum:histogram_metric"))
 	require.True(t, ss.Next())
@@ -1530,7 +1530,7 @@ func TestManager_LoadGroups_ShouldCheckWhetherEachRuleHasDependentsAndDependenci
 		Context:    context.Background(),
 		Logger:     promslog.NewNopLogger(),
 		Appendable: storage,
-		QueryFunc:  func(context.Context, string, time.Time) (promql.Vector, error) { return nil, nil },
+		QueryFunc:  func(context.Context, string, time.Time, string) (promql.Vector, error) { return nil, nil },
 	})
 
 	t.Run("load a mix of dependent and independent rules", func(t *testing.T) {
@@ -2557,7 +2557,7 @@ func optsFactory(storage storage.Storage, maxInflight, inflightQueries *atomic.I
 		ConcurrentEvalsEnabled: concurrent,
 		MaxConcurrentEvals:     maxConcurrent,
 		Appendable:             storage,
-		QueryFunc: func(_ context.Context, _ string, ts time.Time) (promql.Vector, error) {
+		QueryFunc: func(_ context.Context, _ string, ts time.Time, _ string) (promql.Vector, error) {
 			inflightMu.Lock()
 
 			current := inflightQueries.Add(1)
@@ -2736,7 +2736,7 @@ func TestRuleDependencyController_AnalyseRules(t *testing.T) {
 				Context:    context.Background(),
 				Logger:     promslog.NewNopLogger(),
 				Appendable: storage,
-				QueryFunc:  func(context.Context, string, time.Time) (promql.Vector, error) { return nil, nil },
+				QueryFunc:  func(context.Context, string, time.Time, string) (promql.Vector, error) { return nil, nil },
 			})
 
 			groups, errs := ruleManager.LoadGroups(time.Second, labels.EmptyLabels(), "", nil, false, tc.ruleFile)
@@ -2765,7 +2765,7 @@ func BenchmarkRuleDependencyController_AnalyseRules(b *testing.B) {
 		Context:    context.Background(),
 		Logger:     promslog.NewNopLogger(),
 		Appendable: storage,
-		QueryFunc:  func(context.Context, string, time.Time) (promql.Vector, error) { return nil, nil },
+		QueryFunc:  func(context.Context, string, time.Time, string) (promql.Vector, error) { return nil, nil },
 	})
 
 	groups, errs := ruleManager.LoadGroups(time.Second, labels.EmptyLabels(), "", nil, false, "fixtures/rules_multiple.yaml")

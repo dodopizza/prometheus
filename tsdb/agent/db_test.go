@@ -106,7 +106,7 @@ func TestUnsupportedFunctions(t *testing.T) {
 	defer s.Close()
 
 	t.Run("Querier", func(t *testing.T) {
-		_, err := s.Querier(0, 0)
+		_, err := s.Querier(0, 0, "")
 		require.Equal(t, err, ErrUnsupported)
 	})
 

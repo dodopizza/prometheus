@@ -1092,7 +1092,7 @@ func setupRemote(s storage.Storage) *httptest.Server {
 				}
 			}
 
-			querier, err := s.Querier(query.StartTimestampMs, query.EndTimestampMs)
+			querier, err := s.Querier(query.StartTimestampMs, query.EndTimestampMs, "")
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -4833,7 +4833,7 @@ type fakeQuery struct {
 	execCalls []context.Context
 }
 
-func (q *fakeQuery) Exec(ctx context.Context) *promql.Result {
+func (q *fakeQuery) Exec(ctx context.Context, description string) *promql.Result {
 	q.execCalls = append(q.execCalls, ctx)
 	return &promql.Result{
 		Value: &parser.StringLiteral{

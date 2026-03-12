@@ -370,7 +370,7 @@ func BenchmarkRangeQuery(b *testing.B) {
 				if err != nil {
 					b.Fatal(err)
 				}
-				res := qry.Exec(ctx)
+				res := qry.Exec(ctx, "")
 				if res.Err != nil {
 					b.Fatal(res.Err)
 				}
@@ -434,7 +434,7 @@ func BenchmarkJoinQuery(b *testing.B) {
 					time.Second*10)
 				require.NoError(b, err)
 
-				res := qry.Exec(ctx)
+				res := qry.Exec(ctx, "")
 				require.NoError(b, res.Err)
 
 				qry.Close()
@@ -513,7 +513,7 @@ func BenchmarkNativeHistograms(b *testing.B) {
 				if err != nil {
 					b.Fatal(err)
 				}
-				if result := qry.Exec(context.Background()); result.Err != nil {
+				if result := qry.Exec(context.Background(), ""); result.Err != nil {
 					b.Fatal(result.Err)
 				}
 			}
@@ -583,7 +583,7 @@ func BenchmarkNativeHistogramsCustomBuckets(b *testing.B) {
 				if err != nil {
 					b.Fatal(err)
 				}
-				if result := qry.Exec(context.Background()); result.Err != nil {
+				if result := qry.Exec(context.Background(), ""); result.Err != nil {
 					b.Fatal(result.Err)
 				}
 			}
@@ -645,7 +645,7 @@ func BenchmarkInfoFunction(b *testing.B) {
 				qry, err := engine.NewRangeQuery(context.Background(), testStorage, nil, tc.query, start, end, step)
 				require.NoError(b, err)
 				b.StartTimer()
-				result := qry.Exec(context.Background())
+				result := qry.Exec(context.Background(), "")
 				require.NoError(b, result.Err)
 			}
 		})

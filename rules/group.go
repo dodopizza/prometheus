@@ -16,6 +16,7 @@ package rules
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"maps"
 	"math"
@@ -529,7 +530,7 @@ func (g *Group) Eval(ctx context.Context, ts time.Time) {
 
 		g.metrics.EvalTotal.WithLabelValues(GroupKey(g.File(), g.Name())).Inc()
 
-		vector, err := rule.Eval(ctx, ruleQueryOffset, ts, g.opts.QueryFunc, g.opts.ExternalURL, g.Limit())
+		vector, err := rule.Eval(ctx, ruleQueryOffset, ts, g.opts.QueryFunc, g.opts.ExternalURL, g.Limit(), fmt.Sprintf("evaluating group '%s' (%s)", g.Name(), g.File()))
 		if err != nil {
 			rule.SetHealth(HealthBad)
 			rule.SetLastError(err)
@@ -746,7 +747,7 @@ func (g *Group) RestoreForState(ts time.Time) {
 	// We allow restoration only if alerts were active before after certain time.
 	mint := ts.Add(-g.opts.OutageTolerance)
 	mintMS := int64(model.TimeFromUnixNano(mint.UnixNano()))
-	q, err := g.opts.Queryable.Querier(mintMS, maxtMS)
+	q, err := g.opts.Queryable.Querier(mintMS, maxtMS, "")
 	if err != nil {
 		g.logger.Error("Failed to get Querier", "err", err)
 		return

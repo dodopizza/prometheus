@@ -3107,7 +3107,7 @@ func TestQuerierIndexQueriesRace(t *testing.T) {
 			t.Cleanup(cancel)
 
 			for range testRepeats {
-				q, err := db.Querier(math.MinInt64, math.MaxInt64)
+				q, err := db.Querier(math.MinInt64, math.MaxInt64, "")
 				require.NoError(t, err)
 
 				values, _, err := q.LabelValues(ctx, "seq", nil, c.matchers...)
@@ -3150,7 +3150,7 @@ func TestClose(t *testing.T) {
 		require.NoError(t, db.Close())
 	}()
 
-	q, err := db.Querier(0, 20)
+	q, err := db.Querier(0, 20, "")
 	require.NoError(t, err)
 	require.NoError(t, q.Close())
 	require.Error(t, q.Close())
@@ -3258,7 +3258,7 @@ func BenchmarkQueries(b *testing.B) {
 					qHead, err := NewBlockQuerier(NewRangeHead(head, 1, nSamples), 1, nSamples)
 					require.NoError(b, err)
 					isoState := head.oooIso.TrackReadAfter(0)
-					qOOOHead := NewHeadAndOOOQuerier(1, 1, nSamples, head, isoState, qHead)
+					qOOOHead := NewHeadAndOOOQuerier(1, 1, nSamples, head, isoState, qHead, "")
 
 					queryTypes = append(queryTypes, qt{
 						fmt.Sprintf("_Head_oooPercent:%d", oooPercentage), qOOOHead,
@@ -3562,7 +3562,7 @@ func BenchmarkHeadQuerier(b *testing.B) {
 	}
 	require.NoError(b, app.Commit())
 
-	querier, err := db.Querier(math.MinInt64, math.MaxInt64)
+	querier, err := db.Querier(math.MinInt64, math.MaxInt64, "")
 	require.NoError(b, err)
 	defer func(q storage.Querier) {
 		require.NoError(b, q.Close())

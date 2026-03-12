@@ -528,7 +528,7 @@ func TestSampleAndChunkQueryableClient(t *testing.T) {
 				tc.readRecent,
 				tc.callback,
 			)
-			q, err := c.Querier(tc.mint, tc.maxt)
+			q, err := c.Querier(tc.mint, tc.maxt, "")
 			require.NoError(t, err)
 			defer func() {
 				require.NoError(t, q.Close())

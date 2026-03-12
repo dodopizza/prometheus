@@ -2906,7 +2906,7 @@ func TestMemSeriesIsolation(t *testing.T) {
 
 		require.NoError(t, err)
 
-		iso := h.iso.State(math.MinInt64, math.MaxInt64)
+		iso := h.iso.State(math.MinInt64, math.MaxInt64, "")
 		iso.maxAppendID = maxAppendID
 
 		chunks, err := h.chunksRange(math.MinInt64, math.MaxInt64, iso)
@@ -3130,7 +3130,7 @@ func TestIsolationLowWatermarkMonotonous(t *testing.T) {
 	require.NoError(t, app2.Commit())
 	require.Equal(t, uint64(2), hb.iso.lowWatermark(), "Low watermark should stay two because app1 is not committed yet.")
 
-	is := hb.iso.State(math.MinInt64, math.MaxInt64)
+	is := hb.iso.State(math.MinInt64, math.MaxInt64, "")
 	require.Equal(t, uint64(2), hb.iso.lowWatermark(), "After simulated read (iso state retrieved), low watermark should stay at 2.")
 
 	require.NoError(t, app1.Commit())
@@ -3817,7 +3817,7 @@ func TestChunkNotFoundHeadGCRace(t *testing.T) {
 	require.NoError(t, app.Commit())
 
 	// Get a querier before compaction (or when compaction is about to begin).
-	q, err := db.Querier(mint, maxt)
+	q, err := db.Querier(mint, maxt, "")
 	require.NoError(t, err)
 
 	// Query the compacted range and get the first series before compaction.
@@ -3886,7 +3886,7 @@ func TestDataMissingOnQueryDuringCompaction(t *testing.T) {
 	require.NoError(t, app.Commit())
 
 	// Get a querier before compaction (or when compaction is about to begin).
-	q, err := db.Querier(mint, maxt)
+	q, err := db.Querier(mint, maxt, "")
 	require.NoError(t, err)
 
 	var wg sync.WaitGroup
@@ -4001,7 +4001,7 @@ func TestWaitForPendingReadersInTimeRange(t *testing.T) {
 				require.True(t, waitOver.Load())
 			}
 
-			q, err := db.Querier(c.mint, c.maxt)
+			q, err := db.Querier(c.mint, c.maxt, "")
 			require.NoError(t, err)
 			checkWaiting(q)
 
@@ -4015,7 +4015,7 @@ func TestWaitForPendingReadersInTimeRange(t *testing.T) {
 func TestQueryOOOHeadDuringTruncate(t *testing.T) {
 	testQueryOOOHeadDuringTruncate(t,
 		func(db *DB, minT, maxT int64) (storage.LabelQuerier, error) {
-			return db.Querier(minT, maxT)
+			return db.Querier(minT, maxT, "")
 		},
 		func(t *testing.T, lq storage.LabelQuerier, minT, _ int64) {
 			// Samples
@@ -5427,7 +5427,7 @@ func TestAppendingDifferentEncodingToSameSeries(t *testing.T) {
 	}
 
 	// Query back and expect same order of samples.
-	q, err := db.Querier(math.MinInt64, math.MaxInt64)
+	q, err := db.Querier(math.MinInt64, math.MaxInt64, "")
 	require.NoError(t, err)
 
 	series := query(t, q, labels.MustNewMatcher(labels.MatchEqual, "a", "b"))

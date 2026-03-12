@@ -617,7 +617,7 @@ func (db *DBReadOnly) Querier(mint, maxt int64) (storage.Querier, error) {
 	if err != nil {
 		return nil, err
 	}
-	return q.Querier(mint, maxt)
+	return q.Querier(mint, maxt, "")
 }
 
 // ChunkQuerier loads blocks and the wal and returns a new chunk querier over the data partition for the given time range.
@@ -2070,7 +2070,7 @@ func (db *DB) Snapshot(dir string, withHead bool) error {
 }
 
 // Querier returns a new querier over the data partition for the given time range.
-func (db *DB) Querier(mint, maxt int64) (_ storage.Querier, err error) {
+func (db *DB) Querier(mint, maxt int64, description string) (_ storage.Querier, err error) {
 	var blocks []BlockReader
 
 	db.mtx.RLock()
@@ -2128,7 +2128,7 @@ func (db *DB) Querier(mint, maxt int64) (_ storage.Querier, err error) {
 	if overlapsOOO {
 		// We need to fetch from in-order and out-of-order chunks: wrap the headQuerier.
 		isoState := db.head.oooIso.TrackReadAfter(db.lastGarbageCollectedMmapRef)
-		headQuerier = NewHeadAndOOOQuerier(inoMint, mint, maxt, db.head, isoState, headQuerier)
+		headQuerier = NewHeadAndOOOQuerier(inoMint, mint, maxt, db.head, isoState, headQuerier, description)
 	}
 
 	if headQuerier != nil {

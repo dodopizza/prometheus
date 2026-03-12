@@ -133,7 +133,7 @@ func (h *readHandler) remoteReadSamples(
 				return err
 			}
 
-			querier, err := h.queryable.Querier(query.StartTimestampMs, query.EndTimestampMs)
+			querier, err := h.queryable.Querier(query.StartTimestampMs, query.EndTimestampMs, "")
 			if err != nil {
 				return err
 			}

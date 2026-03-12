@@ -309,7 +309,7 @@ func (h *headIndexReader) LabelNamesFor(ctx context.Context, series index.Postin
 
 // Chunks returns a ChunkReader against the block.
 func (h *Head) Chunks() (ChunkReader, error) {
-	return h.chunksRange(math.MinInt64, math.MaxInt64, h.iso.State(math.MinInt64, math.MaxInt64))
+	return h.chunksRange(math.MinInt64, math.MaxInt64, h.iso.State(math.MinInt64, math.MaxInt64, ""))
 }
 
 func (h *Head) chunksRange(mint, maxt int64, is *isolationState) (*headChunkReader, error) {

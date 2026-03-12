@@ -521,12 +521,12 @@ type HeadAndOOOQuerier struct {
 	querier    storage.Querier // Used for LabelNames, LabelValues, but may be nil if head was truncated in the mean time, in which case we ignore it and not close it in the end.
 }
 
-func NewHeadAndOOOQuerier(inoMint, mint, maxt int64, head *Head, oooIsoState *oooIsolationState, querier storage.Querier) storage.Querier {
+func NewHeadAndOOOQuerier(inoMint, mint, maxt int64, head *Head, oooIsoState *oooIsolationState, querier storage.Querier, description string) storage.Querier {
 	cr := &headChunkReader{
 		head:     head,
 		mint:     mint,
 		maxt:     maxt,
-		isoState: head.iso.State(mint, maxt),
+		isoState: head.iso.State(mint, maxt, description),
 	}
 	return &HeadAndOOOQuerier{
 		mint:    mint,
@@ -578,7 +578,7 @@ func NewHeadAndOOOChunkQuerier(inoMint, mint, maxt int64, head *Head, oooIsoStat
 		head:     head,
 		mint:     mint,
 		maxt:     maxt,
-		isoState: head.iso.State(mint, maxt),
+		isoState: head.iso.State(mint, maxt, ""),
 	}
 	return &HeadAndOOOChunkQuerier{
 		mint:    mint,

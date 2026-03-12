@@ -136,7 +136,7 @@ type QueryLogger interface {
 // it is associated with.
 type Query interface {
 	// Exec processes the query. Can only be called once.
-	Exec(ctx context.Context) *Result
+	Exec(ctx context.Context, description string) *Result
 	// Close recovers memory used by the query result.
 	Close()
 	// Statement returns the parsed statement of the query.
@@ -239,13 +239,13 @@ func (q *query) Close() {
 }
 
 // Exec implements the Query interface.
-func (q *query) Exec(ctx context.Context) *Result {
+func (q *query) Exec(ctx context.Context, description string) *Result {
 	if span := trace.SpanFromContext(ctx); span != nil {
 		span.SetAttributes(attribute.String(queryTag, q.stmt.String()))
 	}
 
 	// Exec query.
-	res, warnings, err := q.ng.exec(ctx, q)
+	res, warnings, err := q.ng.exec(ctx, q, description)
 	return &Result{Err: err, Value: res, Warnings: warnings}
 }
 
@@ -620,7 +620,7 @@ func (ng *Engine) NewTestQuery(f func(context.Context) error) Query {
 //
 // At this point per query only one EvalStmt is evaluated. Alert and record
 // statements are not handled by the Engine.
-func (ng *Engine) exec(ctx context.Context, q *query) (v parser.Value, ws annotations.Annotations, err error) {
+func (ng *Engine) exec(ctx context.Context, q *query, description string) (v parser.Value, ws annotations.Annotations, err error) {
 	ng.metrics.currentQueries.Inc()
 	defer func() {
 		ng.metrics.currentQueries.Dec()
@@ -687,7 +687,7 @@ func (ng *Engine) exec(ctx context.Context, q *query) (v parser.Value, ws annota
 
 	switch s := q.Statement().(type) {
 	case *parser.EvalStmt:
-		return ng.execEvalStmt(ctx, q, s)
+		return ng.execEvalStmt(ctx, q, s, description)
 	case parser.TestStmt:
 		return nil, nil, s(ctx)
 	}
@@ -716,10 +716,10 @@ func durationMilliseconds(d time.Duration) int64 {
 }
 
 // execEvalStmt evaluates the expression of an evaluation statement for the given time range.
-func (ng *Engine) execEvalStmt(ctx context.Context, query *query, s *parser.EvalStmt) (parser.Value, annotations.Annotations, error) {
+func (ng *Engine) execEvalStmt(ctx context.Context, query *query, s *parser.EvalStmt, description string) (parser.Value, annotations.Annotations, error) {
 	prepareSpanTimer, ctxPrepare := query.stats.GetSpanTimer(ctx, stats.QueryPreparationTime, ng.metrics.queryPrepareTime)
 	mint, maxt := FindMinMaxTime(s)
-	querier, err := query.queryable.Querier(mint, maxt)
+	querier, err := query.queryable.Querier(mint, maxt, description)
 	if err != nil {
 		prepareSpanTimer.Finish()
 		return nil, nil, err
