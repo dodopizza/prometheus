@@ -645,7 +645,9 @@ func (api *API) queryRange(r *http.Request) (result apiFuncResult) {
 
 	ctx = httputil.ContextFromRequest(ctx, r)
 
-	res := qry.Exec(ctx, "")
+	ua := r.Header.Get("User-Agent")
+
+	res := qry.Exec(ctx, fmt.Sprintf("executing range query from user agent '%s'", ua))
 	if res.Err != nil {
 		return apiFuncResult{nil, returnAPIError(res.Err), res.Warnings, qry.Close}
 	}

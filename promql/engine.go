@@ -245,7 +245,7 @@ func (q *query) Exec(ctx context.Context, description string) *Result {
 	}
 
 	// Exec query.
-	res, warnings, err := q.ng.exec(ctx, q, description)
+	res, warnings, err := q.ng.exec(ctx, q, fmt.Sprintf("%s: executing query '%s'", description, q.q))
 	return &Result{Err: err, Value: res, Warnings: warnings}
 }
 
